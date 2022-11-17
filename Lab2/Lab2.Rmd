@@ -1,0 +1,171 @@
+---
+title: "Lab Assigment 2"
+author: "Damian Ke & Kyriakos Papadopoulos"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+## Question 1: Optiming parameters
+
+### Question 1
+
+```{r}
+f <- function (x, a0, a1, a2){
+  out <- a0 + a1*x + a2*(x^2)
+  return(out)
+}
+
+loss_function <- function(params, data, f1){
+  y <- 0
+  y <- (f(data[1], params[1], params[2], params[3]) - f1(data[1])) ^ 2
+  y <- y + (f(data[2], params[1], params[2], params[3]) - f1(data[2])) ^ 2
+  y <- y + (f(data[3], params[1], params[2], params[3]) - f1(data[3])) ^ 2
+  return(y)
+}
+
+find_alphas <- function(f, x1,x2,x3){
+ alphas <- optim(c(1,1,1), fn=loss_function, f1=f, data = c(x1, x2, x3))
+ return(alphas)
+}
+
+```
+
+### Question 2
+
+```{r}
+approximate <- function(n, f1){
+  x <- seq(0,1, by=(1/n))
+  
+  i = 1
+  points <- c()
+  while(i < length(x)){
+    
+     first_value <- x[i]
+     last_value <- x[i+1]
+     mid_value <- (first_value + last_value) / 2
+     result <- find_alphas(f1, first_value,  mid_value, last_value)
+     out <- f(x[i], result$par[1], result$par[2], result$par[3])
+     points <- append(points, out)
+     i <- i + 1
+  }
+  return(points)
+}
+```
+
+### Question 3
+
+**Coding the function $f_1(x) = -x(1-x)$**
+```{r}
+f1 <- function(x){
+ return(-x*(1-x)) 
+}
+```
+
+**Coding the function $f_2(x)=-xsin(10\pi x)$**
+```{r}
+f2 <- function(x){
+  return(-x*sin(10*pi*x))
+}
+```
+
+```{r}
+plot_the_difference <- function(n, f1){
+  points <- approximate(n, f1)
+  x<-seq (0,1, by=(1/n))
+  points2 <- f1(x)
+  dataf <- data.frame(points, points2[-1])
+  dataf['i'] <- 1:n
+  p <- ggplot(dataf, aes(i, points)) + geom_point() + geom_line(data= dataf, 
+                                                                aes(x=i, points2..1., color = "red"))
+  p
+}
+```
+
+**Plotting the f1 and our approximate function for n=100: **
+```{r}
+plot_the_difference(100, f1)
+```
+
+**Plotting the f2 and our approximate function for n=100: **
+```{r}
+plot_the_difference(100, f2)
+```
+
+## Question 2: Maximizing likelihood
+
+### Question 1
+```{r}
+load("data.RData")
+```
+
+### Question 2
+Taking the partial derivatives of the log-likelihood of normal distribution with respect $\mu$ and $\sigma$ and make the functions equal to 0. That's how we find the estimators
+
+```{r}
+n = length(data)
+ll_mean_value = (1/n) * sum(data)
+ll_variance = sqrt((1 / n) * sum((data - mean(data)) ^ 2))
+```
+
+### Question 3
+The log likelihood is found by log(product of normal distribution).
+
+Answer: Because maximizing the likelihood there is chance to face an overflow 
+problem. While with the log-likelihood the value of likelihood will be much smaller
+as it will be in log and it will be very difficult to get a value that will cause
+overflow.
+
+```{r}
+loglikelihood <- function(params, data){
+  mean_value = params[1]
+  sigma_squared = params[2]
+  n = length(data)
+  loglikelihood = -(n / 2) * log( 2 * pi) - (n / 2) * log(abs(sigma_squared)) - ((sum((data - mean_value)^2))/(2*sigma_squared))
+  return(-loglikelihood)
+}
+
+gradient <- function(params, data){
+  # Here we took the partial derivatives from loglikehood with respect to mean and sigma
+  n <- length(data)
+  mean_value <- (sum(data) - 2 * n * params[1]) / (params[2] ^ 2)
+  sigma_squared <- (-n/params[2]) + (1/params[3]^3) * (sum(data - params[2]))^2
+
+  return(c(mean_value,sigma_squared))
+}
+```
+
+### Question 4
+```{r, echo=FALSE, results='asis'}
+library(knitr)
+result1 = optim(c(0, 1), fn=loglikelihood, data=data, method = "BFGS") 
+
+result2 = optim(c(0, 1), fn=loglikelihood, data=data, method = "CG") 
+
+
+result3 = optim(c(0, 1), fn=loglikelihood, data=data, method = "BFGS", gr = gradient) 
+
+result4 = optim(c(0, 1), fn=loglikelihood, data=data, method = "CG", gr = gradient) 
+
+optimal_mi= c(result1$par[1], result2$par[1], result3$par[1], result4$par[1])
+optimal_sigma = c(result1$par[2], result2$par[2], result3$par[2], result4$par[2])
+functions_required = c(result1$counts["function"], result2$counts["function"],
+                     result3$counts["function"], result4$counts["function"])
+gradient_evaluations = c(result1$counts["gradient"], result2$counts["gradient"],
+                                  result3$counts["gradient"], result4$counts["gradient"])
+converged = c("Yes", "Yes", "Yes", "Yes")
+table = data.frame(optimal_mi, optimal_sigma, functions_required 
+                   ,gradient_evaluations, converged)
+
+rownames(table) <- c("BFGS without gradient", "CG wuthout gradient","BFGS with gradient", "CG with gradient")
+
+kable(table, caption = "Damian think something for a nice name", align = "ccccc")
+```
+
+The settings that we select is BFGS without gradient as both values that found
+are close to zero despite the fact that BFGS with gradient and CG with gradient
+found the optimal $\mu$ as zero, their optimal $\sigma$ is quite big
