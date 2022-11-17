@@ -5,39 +5,40 @@ f <- function (x, a0, a1, a2){
 }
 
 squarred_error <- function(params, data, f1){
-  print(params)
   y <- 0
-  for(x in data){
-    y = y + (f(x, params[1], params[2], params[3])- f1(x)) ^ 2
-  }
+  y <- (f(data[1], params[1], params[2], params[3]) - f1(data[1])) ^ 2
+  y <- y + (f(data[2], params[1], params[2], params[3]) - f1(data[2])) ^ 2
+  y <- y + (f(data[3], params[1], params[2], params[3]) - f1(data[3])) ^ 2
+  # for(x in data){
+  #   y = y + (f(x, params[1], params[2], params[3])- f1(x)) ^ 2
+  # }
   return(y)
 }
 
-find_alphas <- function(f, data){
- alphas <- optim(c(1,1,1), fn=squarred_error, f1=f, data = data)
+find_alphas <- function(f, x1,x2,x3){
+ alphas <- optim(c(1,1,1), fn=squarred_error, f1=f, data = c(x1, x2, x3))
  return(alphas)
 }
 
-x <- seq(0,1, by = 0.0001)
 
 tmp <- function(n, f1){
-  x <- seq(0,1, by=0.0001)
-  p <- round(length(x) / n)
-  percent <- round(length(x) / n)
-  for(i in 0:(p-1)){
-    data2 <- x[((i * p) + 1 ): ((i * percent) + percent)]
-    first_point <- data2[1]
-    last_point <- data2[length(data2)]
-    middle_point <- data2[round(length(data2)/2)]
-    print(f1(first_point))
-    print(f1(last_point))
-    print(f1(middle_point))
+  x <- seq(0,1, by=(1/n))
+  
+  i = 1
+  points <- c()
+  while(i < length(x)){
     
-    if ((f1(middle_point)> f1(last_point)) || (f1(middle_point)> f1(first_point))){
-      stop("it's wrong")
-    }
+     first_value <- x[i]
+     last_value <- x[i+1]
+     mid_value <- (first_value + last_value) / 2
+     result <- find_alphas(f1, first_value,  mid_value, last_value)
+     out <- f(x[i], result$par[1], result$par[2], result$par[3])
+     points <- append(points, out)
+     i <- i + 1
   }
+  return(points)
 }
+
 
 # Question 3
 f1 <- function(x){
@@ -48,12 +49,17 @@ f2 <- function(x){
   return(-x*sin(10*pi*x))
 }
 
-loss_function <- function(x, a){
-  out <- f(a)
-  return()
+
+plot_the_difference <- function(n, f1){
+  points <- tmp(n, f1)
+  x<-seq (0,1, by=(1/n))
+  points2 <- f1(x)
+  dataf <- data.frame(points, points2[-1])
+  dataf['i'] <- 1:n
+  p <- ggplot(dataf, aes(i, points)) + geom_point() + geom_line(data= dataf, 
+                                                                aes(x=i, points2..1., color = "red"))
+  p
 }
-
-
 
 
 #======================================
