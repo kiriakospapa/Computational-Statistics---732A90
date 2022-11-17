@@ -4,24 +4,21 @@ f <- function (x, a0, a1, a2){
   return(out)
 }
 
-squarred_error <- function(params, data, f1){
+loss_function <- function(params, data, f1){
   y <- 0
   y <- (f(data[1], params[1], params[2], params[3]) - f1(data[1])) ^ 2
   y <- y + (f(data[2], params[1], params[2], params[3]) - f1(data[2])) ^ 2
   y <- y + (f(data[3], params[1], params[2], params[3]) - f1(data[3])) ^ 2
-  # for(x in data){
-  #   y = y + (f(x, params[1], params[2], params[3])- f1(x)) ^ 2
-  # }
   return(y)
 }
 
 find_alphas <- function(f, x1,x2,x3){
- alphas <- optim(c(1,1,1), fn=squarred_error, f1=f, data = c(x1, x2, x3))
+ alphas <- optim(c(1,1,1), fn=loss_function, f1=f, data = c(x1, x2, x3))
  return(alphas)
 }
 
 
-tmp <- function(n, f1){
+approximate <- function(n, f1){
   x <- seq(0,1, by=(1/n))
   
   i = 1
@@ -51,7 +48,7 @@ f2 <- function(x){
 
 
 plot_the_difference <- function(n, f1){
-  points <- tmp(n, f1)
+  points <- approximate(n, f1)
   x<-seq (0,1, by=(1/n))
   points2 <- f1(x)
   dataf <- data.frame(points, points2[-1])
@@ -86,13 +83,15 @@ loglikelihood <- function(params, data){
 gradient <- function(params, data){
   # Here we took the partial derivatives from loglikehood with respect to mean and sigma
   n <- length(data)
-  mean_value <- (sum(x) - 2 * n * params[1]) / (params[2] ^ 2)
+  
+  mean_value <- (sum(data) - 2 * n * params[1]) / (params[2] ^ 2)
   sigma_squared <- (-n/params[2]) + (1/params[3]^3) * (sum(data - params[2]))^2
   print(mean_value)
   
   return(c(mean_value,sigma_squared))
 }
 
+data = 1:100
 result1 = optim(c(0, 1), fn=loglikelihood, data=data, method = "BFGS") 
 result1$par
 
