@@ -1,0 +1,286 @@
+---
+title: "Computational Statistics Lab 1"
+author: "Damian Ke & Kyriakos Papadopoulos"
+date: "2022-14-11"
+output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Libraries
+
+```{r, results='hide', warning=FALSE}
+library(ggplot2)
+```
+
+## Question 1: Be careful when comparing
+
+**Q.1**: Check the results of the snippets. Comment what is going on.
+
+```{r}
+x1 <-  1/3
+x2 <-  1/4
+if(x1 - x2==1/12){
+  print("Subtraction is correct")
+  }else{
+  print("Subtraction is wrong")
+}
+
+x1 <- 1 
+x2 <- 1/2
+if(x1 - x2==1/2){
+  print("Subtraction is correct")
+  }else{
+  print("Subtraction is wrong")
+}
+
+```
+
+**A**: The first code snippet is mathematically correct, but due to
+underflow the program is incorrect. It is because $\frac{1}{3}$. has
+infinitive values after the decimal point and computers have limited
+storage value (regarding to type of variable, which in our case is a
+double and in R it is represented in 53 bits) and cannot represent all
+digits of $\frac{1}{3}$ .
+
+The second code snippet is correct, because $\frac{1}{2}$ is exactly 0.5
+which does not have infinitive values after decimal point and can be
+represented exactly in R.
+
+**Q.2**: If there are any problems, suggest improvements.
+
+**A**: Is a utility to compare R objects x and y testing 'near
+equality'. If they are different, comparison is still made to some
+extent, and a report of the differences is returned
+
+The all.equal() function compares two objects at a "near equality",
+which means that if difference between the values is very small then it
+considers that the values are equal and returns true. \$a_1 - e \< a_2
+\< a_1 + e \$ Where e is a very small number.
+
+```{r}
+x1 <-  1/3
+x2 <-  1/4
+#1.2
+if(isTRUE(all.equal(x1-x2,1/12))){
+  print("Subtraction is correct")
+}else{
+  print("Subtraction is wrong")
+}
+```
+
+## Question 2: Derivative
+
+**Q.1**: Write your own R function to calculate the derivative of
+$f(x) = x$ in this way with $\epsilon=10^{-15}$.
+
+**A**:
+
+```{r}
+derivative <- function(x){
+  out =(x + 10^-15 - x)/10^-15
+  return(out)
+}
+```
+
+**Q.2**: Evaluate your derivative function at $x=1$ and $x = 100000$.
+
+**A**:
+
+```{r}
+print(derivative(1))
+print(derivative(100000))
+```
+
+**Q.3**: What values did you obtain? What are the true values? Explain
+the reasons behind the discovered differences.
+
+**A**: We got $1.110223$ and $0$, the real values should be $1$ as the x
+cancel each other and the $\frac{\epsilon}{\epsilon} = 1$. The issue is because of underflow (in both cases). In the first case, R can not represent all the digits. In the second case, in the nominator $100000 + \epsilon$ gives $100000$ as $\epsilon$ is very small and can't be added correctly to 100000.
+
+## Question 3: Variance
+
+**Q.1**: Write your own R function, myvar, to estimate the variance in
+this way
+
+**A**:
+
+```{r}
+myvar <- function(x){
+  n = length(x)
+  result = ((1/(n-1))*(sum(x^2)- (1/n)*(sum(x)^2)))
+  return (result)
+}
+```
+
+**Q.2**: Generate a vector $x= (x_1,...,x_{10000})$ with 10000 random
+numbers with mean $10^8$ and variance 1.
+
+**A**:
+
+```{r}
+t = rnorm(10000, 10^8, 1)
+```
+
+**Q.3**: For each subset \$ X_i = {x_1,...,x_i}, i = 1,...,10000\$
+compute the difference $Y_i = myvar(X_i)-var(X_i)$, where $var(X_i)$ is
+the standard variance estimation function in R. Plot the dependence
+$Y_i$ on $i$. Draw conclusions from this plot. How well does your
+function work? Can you explain the behaviour?
+
+**A**
+
+```{r}
+test = c()
+for(i in 1:length(t)){
+  a = myvar(t[1:i]) - var(t[1:i])
+  test = append(test, a)
+}
+
+data = data.frame("Values" = test)
+data["i"] = 1:length(t)
+data[1,1] <- 0
+
+p <- ggplot(data, aes(x=i, y=as.numeric(Values))) +
+  geom_point() +
+  ylab("Error")+
+  ggtitle("Scatterplot, i over Error")
+p
+```
+
+There is a line along the Error = -1, and most of the numbers have a error
+between 4 to 0 and -2 to -4. We can therefore conclude that our function
+is not accurate.The $\sum_{i = 1}^{n} x^2_i$ is a large value. When we substracting with with $\frac{1}{n}*(\sum_{i = 1}^{n} x_i)^2$ and divide by n we get underflow.
+
+**Q4**: How can you better implement a variance estimator? Find and
+implement a formula that will give the same results as var()
+
+```{r}
+
+better_myvar <- function(x){
+  sum((x- mean(x))^2) / (length(x) - 1)
+}
+
+test2 = c()
+for(i in 1:length(t)){
+  a = better_myvar(t[1:i]) - var(t[1:i])
+  test2 = append(test2, a)
+}
+
+data = data.frame("Values" = test2)
+data["i"] = 1:length(t)
+data[1,1] <- 0
+
+p2 <- ggplot(data, aes(x=i, y=as.numeric(Values))) +
+  geom_point()+
+  ylab("Error")+
+  ggtitle("Scatterplot, i over Error")
+p2
+```
+
+**A**: The variance method can be improved by using normal formula for
+varience. $\frac{(\sum_{i = 1}^{n} X_i-\overline{X})^2}{n-1}$. As it can
+be seen in the plot, the error is very small around 0 and it can be
+considered as sucessful method.
+
+## Question 4: Binomial coeffcient
+
+**Q.1**: Even if overflow and underfl ow would not occur these
+expressions will not work correctly for all values of n and k. Explain
+what is the problem in A, B and C respectively.
+
+```{r}
+bf1 <- function(n, k){
+  out <- prod ( 1 : n ) / (prod ( 1 : k ) * prod ( 1 : ( n - k ) ) )
+  return(out)
+}
+
+bf2 <- function(n, k){
+  out <- prod( ( k+1) : n ) / prod ( 1 : ( n - k ) )
+  return(out)
+}
+
+bf3 <- function(n, k){
+  out <- prod ( ( ( k+1) : n ) / ( 1 : ( n - k ) ) )
+  return(out)
+}
+
+```
+
+**A**: If n = k then the demoninator will be 0 so the value that it will
+return is infinitive in all of 3 cases.
+
+**Q.2**: In mathematical formula one should suspect overflow to occur
+when parameters, here n and k, are large. Experiment numerically with
+the code of A, B and C, for different values of n and k to see whether
+overflow occurs. Graphically present the results of your experiments.
+
+```{r}
+n_values = c(0:1000)
+k_values = c(0:1000)
+#results_list = dataframe(c=("N", ))
+results1 = c()
+results2 = c()
+results3 = c()
+n_values_list = c()
+k_values_list = c()
+x = 1
+for(i in k_values){
+  for(j in n_values){
+  if (i <= j){  
+    results1[x] <- bf1(j,i)
+    results2[x] <- bf2(j,i)
+    results3[x] <- bf3(j,i)
+    k_values_list[x] <- i
+    n_values_list[x] <- j
+    x=x+1
+  }
+  }
+}
+
+
+frame = data.frame(results1, results2, results3, n_values_list, k_values_list)
+colnames(frame) = c("df1", "df2", "df3", "N","K")
+
+frame["results1"] <- ifelse((is.na(frame["df1"])),"Not a Value","Value")
+
+p_4 <-  ggplot(frame, aes(x = N, y = K, fill = as.factor(results1))) +
+  geom_tile()+
+  labs(fill="Definition of observation")+
+  ggtitle("Heatmap of Method(A)")
+p_4
+
+frame["results2"] <- ifelse((is.na(frame["df2"])),"Not a Value","Value")
+
+p_5 <-  ggplot(frame, aes(x = N, y = K, fill = as.factor(results2))) +
+  geom_tile()+
+  labs(fill="Definition of observation")+
+  ggtitle("Heatmap of Method(B)")
+p_5
+
+frame["results3"] <- ifelse((is.na(frame["df3"])),"Not a Value","Value")
+
+p_6 <-  ggplot(frame, aes(x = N, y = K, fill = as.factor(results3))) +
+  geom_tile()+
+  labs(fill="Definition of observation")+
+  ggtitle("Heatmap of Method(C)")
+p_6
+
+```
+
+**Q3**: Which of the three expressions have the overflow problem?
+Explain why
+
+**A**: The first 2 have the overflow problem because they consist of 2
+prod one in the numerator and one in the denominator.In the first case when k is too big n-k as well, the output will be $\frac{Inf}{Inf}$ as the product of a very big sequence is *Inf* in R. When it happens that in R it returns *NaN* value.
+
+In the second case we have *NaN* when only n-k is a very big number because The output will be $\frac{Inf}{Inf}$. As mentioned above R in that case returns *NaN*
+
+
+So in the 3rd case it will output *Inf* as both numerator and denominator are inside the same product and it will return Inf for very big numbers and never *NaN*
+

@@ -49,7 +49,7 @@ approximate <- function(n, f1){
      last_value <- x[i+1]
      mid_value <- (first_value + last_value) / 2
      result <- find_alphas(f1, first_value,  mid_value, last_value)
-     out <- f(x[i], result$par[1], result$par[2], result$par[3])
+     out <- f(mid_value, result$par[1], result$par[2], result$par[3])
      points <- append(points, out)
      i <- i + 1
   }
@@ -59,14 +59,16 @@ approximate <- function(n, f1){
 
 ### Question 3
 
-**Coding the function $f_1(x) = -x(1-x)$**
+**Coding the function** 
+$f_1(x) = -x(1-x)$
 ```{r}
 f1 <- function(x){
  return(-x*(1-x)) 
 }
 ```
 
-**Coding the function $f_2(x)=-xsin(10\pi x)$**
+**Coding the function **
+$f_2(x)=-xsin(10\pi x)$
 ```{r}
 f2 <- function(x){
   return(-x*sin(10*pi*x))
@@ -80,8 +82,8 @@ plot_the_difference <- function(n, f1){
   points2 <- f1(x)
   dataf <- data.frame(points, points2[-1])
   dataf['i'] <- 1:n
-  p <- ggplot(dataf, aes(i, points)) + geom_point() + geom_line(data= dataf, 
-                                                                aes(x=i, points2..1., color = "red"))
+  p <- ggplot(dataf, aes(i, points)) + geom_point(aes(color = "Approximated points")) + geom_line(data= dataf, 
+                                                                aes(x=i, points2..1., color = "Function"))
   p
 }
 ```
@@ -96,6 +98,14 @@ plot_the_difference(100, f1)
 plot_the_difference(100, f2)
 ```
 
+**Q**: How did your piecewise- parabolic interpolater fare? Explain
+what you observe.
+
+**A**: We can see that we approximate the first function very well, our estimated
+points fit the function. The same happens with the second function but with a little
+bit more error but still our approximated points fit the function well.
+
+
 ## Question 2: Maximizing likelihood
 
 ### Question 1
@@ -104,38 +114,88 @@ load("data.RData")
 ```
 
 ### Question 2
-Taking the partial derivatives of the log-likelihood of normal distribution with respect $\mu$ and $\sigma$ and make the functions equal to 0. That's how we find the estimators
+Log-likelihood $ln(L(\mu,\sigma))$ = $-\frac{n}{2}*ln(\sigma^2) - \frac{n}{2}*ln(2*\pi) - \frac{1}{2\sigma^2}\sum_{i = 1}^{n} (y_i - \mu)^2$
 
-```{r}
+To find estimators requires to take the partial derivatives of the log-likelihood of normal distribution with respect $\mu$ and $\sigma$ and make the functions equal to 0.
+
+
+For $\mu$:
+$\frac{\partial ln[L(\mu ,\sigma)]}{\partial \mu} = 0$
+
+$\frac{1}{\hat{\sigma}^2} \sum_{i = 1}^{n} (y_i - \hat{\mu})= 0$
+
+Therefore $\hat{\mu}$ is defined as:
+$$\hat{\mu} = \frac{1}{n}\sum_{i = 1}^{n}y_i$$
+
+
+For $\sigma$:
+$\frac{\partial ln[L(\mu ,\sigma)]}{\partial \sigma^2} = 0$
+
+Substituting $\bar{y}$ for $\hat{\mu}$ as from the earlier equation, 
+$\hat{\mu} = \frac{1}{n}\sum_{i = 1}^{n}y_i = \bar{y}$
+
+$-(\frac{1}{\hat{\sigma}^2})+\frac{1}{\hat{\sigma}^4}\sum_{i = 1}^{n} (y_i - \bar{y})^2 =0$
+
+Therefore $\hat{\sigma}$ is defined as:
+$$\hat{\sigma}=\sqrt{\frac{1}{n}\sum_{i = 1}^{n} (y_i - \bar{y})^2}$$
+
+```{r echo=FALSE}
 n = length(data)
 ll_mean_value = (1/n) * sum(data)
 ll_variance = sqrt((1 / n) * sum((data - mean(data)) ^ 2))
+paste0("Mu is equal to: ", ll_mean_value)
+paste0("Sigma is equal to: ", ll_variance)
 ```
 
 ### Question 3
 The log likelihood is found by log(product of normal distribution).
+$$ln(L(\mu,\sigma)) = -\frac{n}{2}*ln(\sigma^2) - \frac{n}{2}*ln(2*\pi) - \frac{1}{2\sigma^2}\sum_{i = 1}^{n} (y_i - \mu)^2$$
+Therefore minus log-likelihood is defined as:
+$$- ln(L(\mu,\sigma)) = -(-\frac{n}{2}*ln(\sigma^2) - \frac{n}{2}*ln(2*\pi) - \frac{1}{2\sigma^2}\sum_{i = 1}^{n} (y_i - \mu)^2)$$
 
-Answer: Because maximizing the likelihood there is chance to face an overflow 
+**The gradient** is therefore found by
+
+For $\mu$:
+$\frac{\partial (-ln[L(\mu ,\sigma))]}{\partial \mu}$
+
+$$= \frac{-\sum_{i = 1}^{n} (y_i - \mu)}{\sigma^2}$$
+
+For $\sigma$:
+$\frac{\partial (-ln[L(\mu ,\sigma))]}{\partial \sigma}$
+
+$$= \frac{n}{\sigma}-\frac{1}{\sigma^3}\sum_{i = 1}^{n} (y_i - {\mu})^2$$
+
+**Q**: Why it is a bad idea to maximize likelihood rather than maximizing log- likelihood?
+
+**A**: Because maximizing the likelihood there is chance to face an overflow 
 problem. While with the log-likelihood the value of likelihood will be much smaller
 as it will be in log and it will be very difficult to get a value that will cause
 overflow.
 
-```{r}
+```{r echo=FALSE}
 loglikelihood <- function(params, data){
   mean_value = params[1]
-  sigma_squared = params[2]
+  sigma = params[2]
   n = length(data)
-  loglikelihood = -(n / 2) * log( 2 * pi) - (n / 2) * log(abs(sigma_squared)) - ((sum((data - mean_value)^2))/(2*sigma_squared))
+  loglikelihood = -(n/2) * log(2*pi) - (n/2) * log(sigma^2) - ((sum((data - mean_value)^2))/(2*sigma^2))
   return(-loglikelihood)
 }
 
 gradient <- function(params, data){
   # Here we took the partial derivatives from loglikehood with respect to mean and sigma
-  n <- length(data)
-  mean_value <- (sum(data) - 2 * n * params[1]) / (params[2] ^ 2)
-  sigma_squared <- (-n/params[2]) + (1/params[3]^3) * (sum(data - params[2]))^2
-
-  return(c(mean_value,sigma_squared))
+  n = length(data)
+  #mean_value <- (sum(data) - 2 * n * params[1]) / (params[2] ^ 2)
+  #Shouldnt it be (-sum(data)-n*params[1])/(params[2]^2) -> Because we are taking partial derivatitves
+  #of negative loglikelihood? And this is just
+  mean = params[1]
+  sigma = params[2]
+  mean_value = -(sum(data-mean)/(sigma^2))
+  sigma_value = (n/sigma) - (1/sigma^3) * (sum((data - mean)^2)) 
+  #sigma <- (n/params[2]) + (1/params[2]^3) * (sum(data - params[1]))^2
+  #Changed some parameters and shouldnt it be
+  #(n/params[2]) - (1/params[2]^3) * (sum(data - params[1]))^2 --> Because we are taking partial derivatitves
+  #of negative likelihood
+  return(c(mean_value,sigma_value))
 }
 ```
 
@@ -144,10 +204,10 @@ gradient <- function(params, data){
 library(knitr)
 result1 = optim(c(0, 1), fn=loglikelihood, data=data, method = "BFGS") 
 
-result2 = optim(c(0, 1), fn=loglikelihood, data=data, method = "CG") 
+result2 = optim(c(0, 1), fn=loglikelihood, data=data, method = "BFGS", gr=gradient) 
 
 
-result3 = optim(c(0, 1), fn=loglikelihood, data=data, method = "BFGS", gr = gradient) 
+result3 = optim(c(0, 1), fn=loglikelihood, data=data, method = "CG") 
 
 result4 = optim(c(0, 1), fn=loglikelihood, data=data, method = "CG", gr = gradient) 
 
@@ -157,15 +217,33 @@ functions_required = c(result1$counts["function"], result2$counts["function"],
                      result3$counts["function"], result4$counts["function"])
 gradient_evaluations = c(result1$counts["gradient"], result2$counts["gradient"],
                                   result3$counts["gradient"], result4$counts["gradient"])
-converged = c("Yes", "Yes", "Yes", "Yes")
+converged = c(result1$convergence,result2$convergence,result3$convergence,result4$convergence)
 table = data.frame(optimal_mi, optimal_sigma, functions_required 
                    ,gradient_evaluations, converged)
 
-rownames(table) <- c("BFGS without gradient", "CG wuthout gradient","BFGS with gradient", "CG with gradient")
+rownames(table) <- c("BFGS without gradient", "BFGS with gradient","CG without gradient", "CG with gradient")
 
-kable(table, caption = "Damian think something for a nice name", align = "ccccc")
+kable(table, caption = "Maximizing likelihood - Algorithm table", align = "ccccc")
 ```
 
-The settings that we select is BFGS without gradient as both values that found
-are close to zero despite the fact that BFGS with gradient and CG with gradient
-found the optimal $\mu$ as zero, their optimal $\sigma$ is quite big
+
+**Q** :Did the algorithms converge in all cases? What were the optimal values of parameters
+and how many function and gradient evaluations were required for algorithms to converge?
+Which settings would you recommend?
+
+
+**A**: As it can be seen in Table 1, all of the algorithms converged.
+The optimal values of the parameters is $\mu = 1.276$ and $\sigma = 2.001$.
+Each algorithm had different required number of functions and gradient evaluations to converge.
+
+**BFGS without gradient** required 37 functions and 15 gradient evaluations.
+
+**BFGS with gradient** required 38 functions and 15 gradient evaluations.
+
+**CG without gradient** required 210 functions and 35 gradient evaluations.
+
+**CG with gradient** required 53 functions and 17 gradient evaluations.
+
+Due to smaller number of required functions and gradient evaluations, the recommended settings
+would be **BFGS without gradient** for this specific case.
+
