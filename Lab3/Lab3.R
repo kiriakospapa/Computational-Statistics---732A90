@@ -34,8 +34,8 @@ x = seq(0.01,100,0.01)
 #g1 = dgamma(x,shape=24,scale=0.0625)
 #x_2 = seq(0.01,t_min,0.01)
 #unif= dunif(x, min = 0, max = t_min)
-df = data.frame(x,f_x(x,c),fp_x(x,t_min,alpha),unif)
-colnames(df) = c("x", "fx","fpx","unif")
+df = data.frame(x, f_x(x, c), fp_x(x, t_min, alpha))
+colnames(df) = c("x", "fx","fpx")
 
 
 p <- ggplot(df, aes(x=x)) +
@@ -122,8 +122,8 @@ fp_x <- function(x,t_min,alpha,c1,c2){
 }
 
 
-
-df2 = df %>% filter(x <= t_min)
+indexes = which(df$x <= t_min)
+df2 = df[indexes, ]
 mconstant = max(df$fx/df$fpx)
 mconstant2 = max(df2$fx/df2$fpx)
 
@@ -137,12 +137,14 @@ fgenonesided<-function(n){
     while (is.na(x)){
       y<-fp_x(runif(1), t_min, alpha, 1, 1)
       u<-runif(1)
-      if (u<=f_x(y, c)/fp_x(y, t_min, alpha, mconstant, mconstant2)){
+      if (u <= f_x(y, c)/fp_x(y, t_min, alpha, mconstant, mconstant2)){
         x<-y
         results=append(results, x)
+        print(x)
       }
       else{
         num.reject<-num.reject+1
+        print("its rejected")
       }
     }  
   }
