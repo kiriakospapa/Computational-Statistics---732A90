@@ -42,39 +42,47 @@ t_min=1.5
 c=1.5
 alpha=1.5
 
-ggplot() +
-  xlim(0.1, 10) +
-  geom_function(fun = target_function, args = list(c = c), colour = "red") +
-  geom_function(fun = majority_function, colour = "black", args = list(a=alpha,t_min=t_min))
-
 
 ```
 
 
 **Q.1:** Plot f(x) and fp(x) together. Can the power-law distribution be used just by itself or is
 there a problem at any place of the support Explain what the problem is and how can it
-be taken care of. Provide values of the power{law distribution's parameters that can be
+be taken care of. Provide values of the powerilaw distribution's parameters that can be
 used in the acceptance-rejection algorithm. Derive and implement a majorizing density.
 
-**A: ** Missing values at fp(x) between to t_min, which cant generate values for these
-values. Solution for this issue is to find another distribution or line that
-envelopts the target function.
+**A: ** The problem is the missing values at fp(x) from 0 to t_min. In that interval the power law distribution cant generate values(it generates values which are equal to infinitive). Solution for this issue is to find another distribution or line that envelopts the target function.
 
-For example:
-t_min=1.5
-c=1.5
-alpha=1.5
-This makes the supported majorizing density envelop the target density.
 
-!!! (NOT SURE)Later on, it will be multiplied by a majorizing constant to envelop the target density.
-but when the values goes towards infinity, the majorizing density is higher than target density.
-The only value that needs to be found is the between 0 to Tmin to have a fully completed majorizing density.
+After testing visually many times with many different values of different parameters we ended up with these parameters for our power-law distribution for x > t_min:
 
-The majorizing density lack support from (0,Tmin)
-To get values for corresponding range, a line will be created from the majorizing density function.
+- **t_min=1.5**
+- **c=1.5**
+- **alpha=1.5**
 
+This makes the supported majorizing density envelop the target density. Also the look quite similar to each other with these parameters and for x > t_min have almost the same values.
+
+For the interval of (0, t_min) we use the power-law distribution with input the value of t_min and for this interval we will have a constant y of Tmin as we can see in the graph.
+
+We will find 2 majorizing constants. One for x <= t_min and one for x > t_min. The process for finding both will be the same. We have to find the minimum c, as it's suggested in the **slide 18** that satisfies this condition: $$c >= \frac{f_x(x)}{f_y(x)}$$
+
+We will implement the above condition in above formula
+
+```{r}
+ggplot() +
+  xlim(0.1, 10) +
+  geom_function(fun = target_function, args = list(c = c), colour = "red") +
+  geom_function(fun = majority_function, colour = "black", args = list(a=alpha,t_min=t_min))
+```
 
 ## 1.2
+
+**Q.2:** Implement an acceptance{rejection algorithm for sampling from the one-sided strictly
+stable distribution of order 1=2 with the proposal distribution built around the power-
+law distribution. To sample from a power-law distribution you can use the function
+poweRlaw::rplcon().
+
+**A: **
 
 ```{r}
 
@@ -133,10 +141,7 @@ accept_reject <- function(n,c){
 
 ```
 
-**Q.2:** Implement an acceptance{rejection algorithm for sampling from the one{sided strictly
-stable distribution of order 1=2 with the proposal distribution built around the power{
-law distribution. To sample from a power{law distribution you can use the function
-poweRlaw::rplcon().
+
 
 ## 1.3
 ```{r}
@@ -166,14 +171,14 @@ rownames(summarized_results) = c("Mean","Variance","Rejection Rate")
 create_plot <- function(i){
   title = paste("c = ", i, sep = "")
   
-  hist(results[i][results[i] < 200], col="green", breaks=70, xlab="", ylab="sample density", freq=FALSE, main=title)
+  hist(results[i][results[i] < 200], col="blue", breaks=70, xlab="", ylab="sample density", freq=FALSE, main=title)
 }
 
 # Code to show all the graphs
 par(mfrow=c(3,2))
 plots = sapply(1:6, create_plot)
 
-summarized_results
+knitr::kable(summarized_results)
 ```
 
 **Q.3: ** Generate a large sample using your implemented sampler, for different choices of c. Present
