@@ -1,161 +1,135 @@
-#1.1
+library(poweRlaw)
 library(ggplot2)
+library(gridExtra)
 
-f_x <- function(x,c){
-  val = c*((sqrt(2*pi))**-1)*exp((-c**2)/(2*x))*x**(-3/2)
-  return (val)
+
+target_function <- function(x, c){
+  res = c * sqrt(2 * pi) ^ (-1) * exp((-c^2) / (2*x)) * x ^ (-3/2)
 }
 
-fp_x <- function(x,t_min,alpha){
-  val = c()
-  for (i in 1:length(x)){
-    if (t_min <= x[i]){
-      val[i] = ((alpha-1)/t_min)*(x[i]/t_min)**-alpha
-    } 
-    else{
-      val[i] = 0
-    }
-  }
-  return (val)
-}
-
-#c = 1.2
-#t_min = 1.5
-#alpha = 1.25
-
-
-
-t_min=0.8
-c=1.5
-alpha=1.15
-
-library(plotly)
-x = seq(0.01,100,0.01)
-#g1 = dgamma(x,shape=24,scale=0.0625)
-#x_2 = seq(0.01,t_min,0.01)
-#unif= dunif(x, min = 0, max = t_min)
-df = data.frame(x, f_x(x, c), fp_x(x, t_min, alpha))
-colnames(df) = c("x", "fx","fpx")
-
-
-p <- ggplot(df, aes(x=x)) +
-  geom_line(aes(y=fx, color="f(x)"))+
-  geom_line(aes(y=fpx, color="fp(x)"))+
-  scale_color_manual(name = "Functions",
-                     values=c("f(x)" = "red",
-                              "fp(x)" = "blue"))+
-  ylab("Y Values")+
-  ggtitle("Y values over x")+
-  xlim(0,100)
-p
-ggplotly(p)
+majority_function <- function(x, a, t_min){
+  res <- c()
   
-
-#Visualization type of solution to get:
-
-
-#Can the power{law distribution be used just by itself or is
-#there a problem at any place of the support Explain what the problem is
-
-#A: Missing values at fp(x) between to t_min, which cant generate values for these
-#values.
-
-
-#how can it be taken care of
-#A:??? Find similar distribution? 
-
-#Provide values of the power{law distribution's parameters that can be
-#used in the acceptance{rejection algorithm.
-
-
-#A: For example:
-#t_min=0.8
-#c=1.5
-#alpha=1.15
-#This makes the supported majorizing density directly under the target density.
-#Later on, it will be multiplied by a majorizing constant to envelop the target density.
-#but when the values goes towards infinity, the majorizing density is higher than target density.
-#The only value that needs to be found is the between 0 to Tmin to have a fully completed majorizing density.
-
-#Q: Derive and implement a majorizing density.
-#A: The majorizing density lack support from (0,Tmin)
-#To get values for corresponding range, a uniform distribution will be used
-#with alpha = 0 and beta = t_min. 
-
-
-
-x = seq(0.01,100,0.01)
-
-df = data.frame(x,f_x(x,c),fp_x(x,t_min,alpha),rep(((alpha-1)/t_min)*(t_min/t_min)**-alpha,))
-colnames(df) = c("x", "fx","fpx")
-
-
-p <- ggplot(df, aes(x=x)) +
-  geom_line(aes(y=fx, color="f(x)"))+
-  geom_line(aes(y=fpx, color="fp(x)"))+
-  scale_color_manual(name = "Functions",
-                     values=c("f(x)" = "red",
-                              "fp(x)" = "blue"))+
-  ylab("Y Values")+
-  ggtitle("Y values over x")+
-  xlim(0,100)
-p
-ggplotly(p)
-
-
-#2.
-#To find majorizing constant, for (0,Tmin) and (Tmin, infinity)
-#It can be found by c =  target density / majorizing constant.
-#Which will give 2 different c values.
-
-fp_x <- function(x,t_min,alpha,c1,c2){
-  val = c()
-  for (i in 1:length(x)){
-    if (t_min <= x[i]){
-      val[i] = (((alpha-1)/t_min)*(x[i]/t_min)**-alpha)*c1
-    } 
+  for(i in 1:length(x)){
+    if(x[i] <= t_min){
+      res[i] = ((a - 1) / t_min) * (t_min/t_min) ^ (-a)
+    }
     else{
-      val[i] = (((alpha-1)/t_min)*(t_min/t_min)**-alpha)*c2
+      res[i] <- ((a - 1) / t_min) * (x[i]/t_min) ^ (-a)
     }
   }
-  return (val)
+  
+  return(res)
 }
 
+t_min=1.5
+c=1.5
+alpha=1.5
 
-indexes = which(df$x <= t_min)
-df2 = df[indexes, ]
-mconstant = max(df$fx/df$fpx)
-mconstant2 = max(df2$fx/df2$fpx)
+ggplot() +
+  xlim(0.1, 10) +
+  geom_function(fun = target_function, args = list(c = c), colour = "red") +
+  geom_function(fun = majority_function, colour = "black", args = list(a=alpha,t_min=t_min))
+
+
+x <- seq(0.001, 10, 0.001)
+
+prob <- sum(x <= t_min) / (sum(x))
+
+# For x bigger than t_min
+maj_c1 <- max(target_function(x[x>t_min],c) / majority_function(x[x>t_min], alpha, t_min))
+
+# For x smaller than t_min
+
+maj_c2 <- max(target_function(x[x<=t_min],c) / majority_function(x[x<=t_min], alpha, t_min))
 
 
 
-fgenonesided<-function(n){
-  results = c()
-  num.reject<-0
+n = 5000
+
+accept_reject <- function(n,c){
+  values <- c()
+  rejects <- 0
   for(i in 1:n){
-    x<-NA
-    while (is.na(x)){
-      y<-fp_x(runif(1), t_min, alpha, 1, 1)
-      u<-runif(1)
-      if (u <= f_x(y, c)/fp_x(y, t_min, alpha, mconstant, mconstant2)){
-        x<-y
-        results=append(results, x)
-        print(x)
+    x <- NA
+    
+    while(is.na(x)){
+      prob2 <- sample(0:1, 1, prob = c(prob, 1-prob))
+      # For 0 is x <= tmin
+      # For 1 is x > tmin
+      u <- runif(1)
+      
+      
+      if(prob2 == 0){
+        y <- runif(1, 0, t_min)
+        
+        if(u <= target_function(y, c) / (maj_c2 * majority_function(y, alpha, t_min))){
+          x <- y
+          values <- append(values, x)
+        }else{
+          rejects <- rejects + 1
+        }
       }
       else{
-        num.reject<-num.reject+1
-        print("its rejected")
+        y <- rplcon(1, xmin = t_min, alpha = alpha)
+        
+        if(u <= target_function(y, c) / (maj_c1 * majority_function(y, alpha, t_min))){
+          x <- y
+          values <- append(values, x)
+        }else{
+          rejects <- rejects + 1
+        }
       }
-    }  
+      
+    }
+    
   }
-  return(c(results,num.reject))
+  return(c(values,rejects))
 }
 
-tmp = fgenonesided(2000)
-#p_tmp = ggplot() + geom_histogram(aes(tmp),binwidth=1)
-hist(tmp,col="black",breaks=100,xlab="",ylab="",freq=FALSE,main="")
-#hist(tmp,col=gray(0.8),breaks=100,xlab="",ylab="",freq=FALSE,main="",add=TRUE)
 
-mbetas1<-sapply(rep(4,10000),fgenonesided)
+hist(values[values < 200], col="green", breaks=70, xlab="", ylab="sample density", freq=FALSE, main="")
+
+c_list = c(1,2,3,4,5,6)
+results = data.frame(matrix(NA,ncol=length(c_list),nrow=n))
+summarized_results = data.frame(matrix(NA,ncol=length(c_list),nrow=3))
+plots = c()
+df = data.frame()
+for (i in 1:length(c_list)) {
+  var <- c_list[i]
+  answer = accept_reject(n,var)
+  rejects = answer[n+1]
+  #values = answer[1:n]
+  results[i] = answer[1:n]
+  summarized_results[1,i] = mean(answer[1:n])
+  summarized_results[2,i] = var(answer[1:n])
+  summarized_results[3,i] = rejects/n
+  df = data.frame(results)
+  #plots[i] <- hist(results[i][results[i] < 200], col="green", breaks=70, xlab="", ylab="sample density", freq=FALSE, main="")
+}
+colnames(results) = c("c1","c2","c3","c4","c5","c6")
+colnames(df) = c("c1","c2","c3","c4","c5","c6")
+colnames(summarized_results) = c("c1","c2","c3","c4","c5","c6")
+rownames(summarized_results) = c("Mean","Variance","Rejection Rate")
+
+
+create_plot <- function(i){
+  title = paste("c = ", i, sep = "")
+  
+  hist(results[i][results[i] < 200], col="green", breaks=70, xlab="", ylab="sample density", freq=FALSE, main=title)
+}
+
+
+for(i in 1:6){
+  create_plot(i)
+}
+
+# Code to show all the graphs
+par(mfrow=c(3,2))
+sapply(1:6, create_plot)
+
+#What is the mean and variance and how do they depend on c?
+#Study the rejection rate.
+
 
 
