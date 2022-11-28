@@ -46,12 +46,12 @@ alpha=1.5
 ```
 
 
-**Q.1:** Plot f(x) and fp(x) together. Can the power-law distribution be used just by itself or is
+**Question 1: ** Plot f(x) and fp(x) together. Can the power-law distribution be used just by itself or is
 there a problem at any place of the support Explain what the problem is and how can it
 be taken care of. Provide values of the powerilaw distribution's parameters that can be
 used in the acceptance-rejection algorithm. Derive and implement a majorizing density.
 
-**A: ** The problem is the missing values at fp(x) from 0 to t_min. In that interval the power law distribution cant generate values(it generates values which are equal to infinitive). Solution for this issue is to find another distribution or line that envelopts the target function.
+**Answer 1: ** The problem is the missing values at fp(x) from 0 to t_min. In that interval the power law distribution cant generate values(it generates values which are equal to infinitive). Solution for this issue is to find another distribution or line that envelopts the target function.
 
 
 After testing visually many times with many different values of different parameters we ended up with these parameters for our power-law distribution for x > t_min:
@@ -77,12 +77,12 @@ ggplot() +
 
 ## 1.2
 
-**Q.2:** Implement an acceptance{rejection algorithm for sampling from the one-sided strictly
+**Question 2: ** Implement an acceptance{rejection algorithm for sampling from the one-sided strictly
 stable distribution of order 1=2 with the proposal distribution built around the power-
 law distribution. To sample from a power-law distribution you can use the function
 poweRlaw::rplcon().
 
-**A: **
+**Answer 2: **
 
 ```{r}
 
@@ -178,7 +178,7 @@ create_plot <- function(i){
 par(mfrow=c(3,2))
 plots = sapply(1:6, create_plot)
 
-knitr::kable(summarized_results)
+knitr::kable(summarized_results, align = c("l", "l", "l", "l", "l", "l"))
 ```
 
 **Q.3: ** Generate a large sample using your implemented sampler, for different choices of c. Present
@@ -191,3 +191,144 @@ This can be due to results found in the figures corresponding to different c val
 For higher number of C, the target distribution moves towards right, it can be seen that both mean and variance
 increases which means that more sample values from the acceptance-rejection algorithm will be outside
 of the target function.
+
+
+# Question 2: Laplace distribution
+
+**Question 1: **Write a code generating double exponential distribution DR(0, 1) 
+from Unif(0, 1) by using the inverse CDF method. Explain how you obtained that 
+code step by step. Generate 10000 random numbers from this distribution, plot the 
+histogram and comment whether the result looks reasonable.
+
+**Answer 1: **
+
+- For $x < \mu$
+
+$$CDF = \frac{a}{2} \left[\int_{-\infty}^{x} e^{\alpha x - a\mu} \; dx\right] =>$$
+
+
+$$CDF = \frac{e^{\alpha x - a\mu}}{2}(1)$$
+
+- For $x >= \mu$
+$$CDF = \frac{a}{2} \left[\int_{-\infty}^{x} e^{- \alpha x + a\mu} \; dx\right] =>$$
+$$CDF = 1+ \frac{e^{-\alpha x +a\mu}}{2} (2)$$
+
+**Taking into account the (1) and (2) math equations of CDF we can write it as:**
+$$\frac{1}{2} + \frac{1}{2}sgn(x-\mu)(1 - e^{-a|x-\mu|})$$
+
+The next step is to find the inverse CDF which we are gonna represent it like 
+$F^{-1}(y)$. In order to find we define the CDF as equal to y.
+
+$$y = \frac{1}{2} + \frac{1}{2}sgn(x-\mu)(1 - e^{-a|x-\mu|})$$
+
+Now, we have to solve the above questions with respect to x 
+
+- For $x>= \mu$
+
+$$x = \mu - \frac{1}{a}ln(2-2y) (3)$$
+
+- For $x < \mu$
+
+$$x = \mu + \frac{1}{a}ln(2y) (4)$$
+
+**Taking into account the (3) and (4) math equations of  inverse CDF we can write it as:**
+
+$$F^{-1}(p) = \mu - \frac{1}{a} sgn(p-0.5)ln(1-2|p-0.5|)$$
+
+
+```{r}
+de <- function(x){
+  y <- (1/2) * exp(-abs(x))
+  return(y)
+}
+
+x <- runif(10000)
+
+invcdf <- function(x){
+  out <- 0 - 1 * sign(x - 0.5) * log(1-2*abs(x - 0.5), base = exp(1))
+}
+
+set.seed(12345)
+x <- runif(10000, min=0, max= 1)
+y1 = de(x)
+y2 = invcdf(x)
+
+df = data.frame(y1, y2, x)
+df[is.na(df)] = 0
+
+p <- ggplot(df, aes(x=y2)) + geom_histogram(color= "black", binwidth = 0.1)
+p
+```
+
+Visually we can say that the samples that we got from the inverse CDF follow the distribution of the Laplace distribution
+
+**Question 2: **  Use the Acceptance/rejection method with DE(0, 1) as a majorizing 
+density to generate N (0, 1) variables. Explain step by step how this was done. 
+How did you choose constant c in this method? Generate 2000 random numbers N(0, 1) 
+using your code and plot the histogram. Compute the average rejection rate R in 
+the acceptance/rejection procedure. What is the expected rejection rate ER and 
+how close is it to R? Generate 2000 numbers from N (0, 1) using standard rnorm() 
+procedure, plot the histogram and compare the obtained two histograms.
+
+**Answer 2: **
+
+The first step is to find the majorizing constant that will lead to
+
+$$cf_Y(x) >= f_X(x)$$
+
+Replacing the function we end up with this equation: 
+
+$$c >= \frac{2}{sqrt(2\pi)} e^{\frac{-x^2}{2} + |x|}$$
+
+Taking the first and second derivative we find that it maximazes at x= 1. So we replace x=1 and c it's equal to $$\frac{2}{sqrt(2*\pi)} * e^{0.5}$$
+
+```{r}
+c = (2/sqrt(2*pi)) * exp(0.5)
+n = 2000
+
+counter <- 0
+results <- c()
+
+for(i in 1:n){
+  
+  continue <- TRUE
+  
+  while(continue){
+      counter <- counter + 1
+      y <- invcdf(runif(1))
+      u <- runif(1)
+      if( u <= (dnorm(y,mean =  0, sd = 1) / (c * de(y)))){
+        results <- append(results, y)
+        continue = FALSE
+      }
+  }
+
+}
+
+normald = rnorm(2000, 0, 1)
+
+df = data.frame(results)
+p <- ggplot(df, aes(x=results)) + geom_histogram(color="black", binwidth = 0.1,
+                                                 fill = "blue") + ggtitle("Acceptance Rejectance Method") +
+                                                 xlab("") + ylab("")
+
+norm = rnorm(2000,0, 1)
+df2 = data.frame(norm)
+p1 <- ggplot(df2, aes(x=norm)) + geom_histogram(color="black", binwidth = 0.1,
+                                                  fill = "red") + ggtitle("Normal Distribution") +
+                                                  xlab("") + ylab("")
+
+rejection_rate <- n / counter
+expected_rejection_rate <- 1/c
+
+options(digits = 4)
+grid.arrange(p, p1, ncol=2)
+```
+
+We can see that the samples that we obtained follow the ditribution
+
+```{r, echo=FALSE}
+cat("Our rejection rate is ", rejection_rate,"\n")
+cat("Our expected rejection rate is ", expected_rejection_rate, "\n")
+cat("Their difference is ", abs(rejection_rate - expected_rejection_rate))
+```
