@@ -1,0 +1,32 @@
+---
+title: "Assignment2"
+author: "Damian Ke & Kyriakos Papadopoulos"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+$$p(\overrightarrow{\mu}) = 1* N(\mu_1,0.2)*N(\mu_2,0.2)*N(\mu_3,0.2)*...*N(\mu_n,0.2)$$
+$$p(\overrightarrow{\mu}) = (\frac{1}{0.2*\sqrt{2*\pi}})^n*e^{(-\frac{\sum_{i=2}^{n}(\mu_i-\mu_{i-1})^2}{0.08})}$$
+
+$$p(\overrightarrow{Y}\mid\overrightarrow{\mu})= (\frac{1}{0.2*\sqrt{2*\pi}})^n*e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})} $$ 
+
+
+
+
+
+
+#1.3
+For case
+
+$p({\mu_1}\mid\overrightarrow\mu_{-1},\overrightarrow{Y})$
+
+
+
+$p({\mu_n}\mid\overrightarrow\mu_{-n},\overrightarrow{Y})$
+
+
+$p({\mu_i}\mid\overrightarrow\mu_{-i},\overrightarrow{Y})$
