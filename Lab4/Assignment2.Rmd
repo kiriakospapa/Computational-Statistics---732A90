@@ -21,22 +21,51 @@ $$p(\overrightarrow{Y}\mid\overrightarrow{\mu})= (\frac{1}{0.2*\sqrt{2*\pi}})^n*
 
 #1.3
 To get posterior 
-$p({\overrightarrow\mu}\mid\overrightarrow{Y}) \propto p(\overrightarrow{Y}\mid\overrightarrow{\mu}) * p(\overrightarrow{\mu})$  
+$p({\overrightarrow\mu}\mid\overrightarrow{Y}) \propto p(\overrightarrow{Y}\mid\overrightarrow{\mu}) * p(\overrightarrow{\mu})$
+
+It is also important to mention that
+$p({\overrightarrow\mu},\overrightarrow{Y}) = p(\overrightarrow{Y}\mid\overrightarrow{\mu}) * p(\overrightarrow{\mu})$
+
+Therefore,
+
+$p({\mu_i}\mid\overrightarrow{\mu}_{-i},\overrightarrow{Y}) = \frac{p(\overrightarrow{\mu}_{-i},\overrightarrow{Y},\mu_i)}{p(\overrightarrow{\mu}_{-i},\overrightarrow{Y})}$
+
+Also 
+$p(\overrightarrow{\mu}_{-i},\overrightarrow{Y},\mu_i) = p({\overrightarrow\mu},\overrightarrow{Y})$
+
+It can therefore be concluded that $(\frac{1}{0.2*\sqrt{2*\pi}})^{1}$ will be same for all the cases.
+Therefore, the focus is on the exponents.
+
+$ p({\overrightarrow\mu}\mid\overrightarrow{Y}) \propto e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})}* e^{(-\frac{\sum_{i=1}^{n-1}({u_{i+1}}-\mu_{i})^2}{0.08})}$
+
+Due to
+$\frac{p(\overrightarrow{\mu}_{-i},\overrightarrow{Y},\mu_i)}{p(\overrightarrow{\mu}_{-i},\overrightarrow{Y})}$
+The $\Sigma$ will be canceled out as the only part being left is $\mu_i$.
 
 For case:
 
-$p({\mu_1}\mid\overrightarrow\mu_{-1},\overrightarrow{Y}) : 1 * (\frac{1}{0.2*\sqrt{2*\pi}})^n*e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})}$ 
+$p({\mu_1}\mid\overrightarrow\mu_{-1},\overrightarrow{Y}) \propto e^{(-\frac{({y_1}-\mu_{1})^2+(\mu_2-\mu_1)^2}{0.08})} $ 
 
-$e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})}$
+Through Hint B
 
-
-For other cases the first part of calculations will always be
-$(\frac{1}{0.2*\sqrt{2*\pi}})^{2n-1}$.
-Therefore, the focus should be on the exponents.
+$e^{(-\frac{({\mu_1}-(y_1+\mu_{2})/2)^2+}{0.08/2})} \sim N(\frac{y_i+\mu_2}{2},0.04)$
 
 
-$p({\mu_n}\mid\overrightarrow\mu_{-n},\overrightarrow{Y})$ :
+
+$p({\mu_n}\mid\overrightarrow\mu_{-n},\overrightarrow{Y}) \propto e^{(-\frac{({y_n}-\mu_{n})^2+(\mu_n-\mu_{n-1})^2}{0.08})} $ 
+
+Through Hint B
+
+$e^{(-\frac{({\mu_n}-(y_n+\mu_{n-1})/2)^2+}{0.08/2})} \sim N(\frac{y_n+\mu_{n-1}}{2},0.04)$
 
 
-$p({\mu_i}\mid\overrightarrow\mu_{-i},\overrightarrow{Y})$ : 
+
+$p({\mu_i}\mid\overrightarrow\mu_{-i},\overrightarrow{Y}) \propto e^{(-\frac{({y_i}-\mu_{i})^2+(\mu_i-\mu_{i-1})^2+(\mu_{i+1}-\mu_{i})^2}{0.08})}$ 
+
+Through Hint C
+
+$e^{(-\frac{({\mu_i}-(y_i+\mu_{i-1}+\mu_{i+1})/3)^2+}{0.08/3})} \sim N(\frac{y_i+\mu_{i-1}+\mu_{i+1}}{2},0.08/3)$
+
+
+#1.4
 
