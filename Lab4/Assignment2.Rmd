@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 $$p(\overrightarrow{\mu}) = 1* N(\mu_1,0.2)*N(\mu_2,0.2)*N(\mu_3,0.2)*...*N(\mu_n,0.2)$$
-$$p(\overrightarrow{\mu}) = (\frac{1}{0.2*\sqrt{2*\pi}})^n*e^{(-\frac{\sum_{i=2}^{n}(\mu_i-\mu_{i-1})^2}{0.08})}$$
+$$p(\overrightarrow{\mu}) = (\frac{1}{0.2*\sqrt{2*\pi}})^{n-1}*e^{(-\frac{\sum_{i=1}^{n-1}(\mu_{i+1}-\mu_{i})^2}{0.08})}$$
 
 $$p(\overrightarrow{Y}\mid\overrightarrow{\mu})= (\frac{1}{0.2*\sqrt{2*\pi}})^n*e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})} $$ 
 
@@ -20,13 +20,23 @@ $$p(\overrightarrow{Y}\mid\overrightarrow{\mu})= (\frac{1}{0.2*\sqrt{2*\pi}})^n*
 
 
 #1.3
-For case
+To get posterior 
+$p({\overrightarrow\mu}\mid\overrightarrow{Y}) \propto p(\overrightarrow{Y}\mid\overrightarrow{\mu}) * p(\overrightarrow{\mu})$  
 
-$p({\mu_1}\mid\overrightarrow\mu_{-1},\overrightarrow{Y})$
+For case:
+
+$p({\mu_1}\mid\overrightarrow\mu_{-1},\overrightarrow{Y}) : 1 * (\frac{1}{0.2*\sqrt{2*\pi}})^n*e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})}$ 
+
+$e^{(-\frac{\sum_{i=1}^{n}({y_i}-\mu_{i})^2}{0.08})}$
 
 
+For other cases the first part of calculations will always be
+$(\frac{1}{0.2*\sqrt{2*\pi}})^{2n-1}$.
+Therefore, the focus should be on the exponents.
 
-$p({\mu_n}\mid\overrightarrow\mu_{-n},\overrightarrow{Y})$
+
+$p({\mu_n}\mid\overrightarrow\mu_{-n},\overrightarrow{Y})$ :
 
 
-$p({\mu_i}\mid\overrightarrow\mu_{-i},\overrightarrow{Y})$
+$p({\mu_i}\mid\overrightarrow\mu_{-i},\overrightarrow{Y})$ : 
+
