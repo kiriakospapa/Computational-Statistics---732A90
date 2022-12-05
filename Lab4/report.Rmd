@@ -1,0 +1,150 @@
+---
+title: "CS_LAB3"
+author: "Damian Ke & Kyriakos Papadopoulos"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1: Computations with Metropolis–Hastings
+
+### Question 1 
+
+Use Metropolis–Hastings algorithm to generate samples from this distribution by usingproposal distribution as log–normal LN(Xt, 1), take some starting point. Plot the chain you obtained as a time series plot. What can you guess about the convergence of the chain? If there is a burn–in period, what can be the size of this period?
+
+**Answer 1: **
+
+```{r, include=FALSE}
+set.seed(12345)
+# Proposal distribution
+p_x <- function(x){
+  out <- x ^ 5 *  exp(-x)
+  return(out)
+}
+```
+
+```{r}
+f.MCMC.MH<-function(nstep, X0, props){
+  vN<-1:nstep
+  vX<-rep(X0,nstep)
+  
+  for (i in 2:nstep){
+    
+    X<-vX[i-1]
+    Y<-rlnorm(1, meanlog= X, sdlog=props)
+    u<-runif(1)
+    a <- min(c(1, (p_x(Y)*dlnorm(X,meanlog=Y,sdlog=props))/(p_x(X)*dlnorm(Y,meanlog= X,sdlog=props))))
+
+    if (u <=a){
+      vX[i]<-Y
+      }
+    else{
+      vX[i]<-X
+      }    
+  
+  }
+   
+  plot(vN,vX,pch=19,cex=0.3,col="black",xlab="t",ylab="X(t)", type = "l")
+
+  return(vX)
+}
+X = f.MCMC.MH(2000, 1, 1)
+```
+
+We can clearly observe that our graph doesn't converge. At the same time, that means that there is no burn-in period since it doesn't converge. That's because the burn-in period it's in the beginning until the samples start represening the target distribution sufficiently, which it doesn't happen in our case.
+
+### Question 2
+
+Perform Step 1 by using the chi–square distribution $x^{2}([X_t + 1])$ as a proposal distribution, where $[x]$ is the floor function, meaning the integer part of x for positive x, i.e. $[2.95] = 2$
+
+**Answer 2: **
+
+```{r}
+f.MCMC.MH2<-function(nstep, X0){
+  vN<-1:nstep
+  vX<-rep(X0,nstep)
+  
+  for (i in 2:nstep){
+    
+    X<-vX[i-1]
+    Y<-rchisq(1, df=floor(X + 1))
+    u<-runif(1)
+    a <- min(c(1, (p_x(Y)*dchisq(X, df=floor(X + 1)))/(p_x(X)*dchisq(Y, df=floor(Y + 1)))))
+    
+    if (u <=a){
+      vX[i]<-Y
+    }
+    else{
+      vX[i]<-X
+    }    
+    
+  }
+   
+  plot(vN,vX,pch=19,cex=0.3,col="black",xlab="t",ylab="X(t)",main="
+       ")
+  #hist(vX, freq=TRUE)
+
+  return(vX)
+}
+
+x <- f.MCMC.MH2(2000, 100)
+```
+We can clearly see that the samples with chi-square converge as all the values are centered around (approximately) 5 as we can see from the graph. We can find the burn-in period visually and say that the burn-in period is from 0 up to a a value a little bigger than 0 compared to 2000. The burn-in period is the period required for a function to reach a stable operating state, so the burn-in period finishes when the fucntion starts converging. 
+
+### Question 3 
+
+Compare the results of Steps 1 and 2 and make conclusions.
+
+
+**Answer 3: ** We can clearly see that sampling with Metropolis - Hastings with chi-square distribution perfroms much better than using the log-normal. It's easily observable that with chi-square distribution our samples converge.
+
+
+### Question 4
+
+Generate 10 MCMC sequences using the generator from Step 2 and starting points 1, 2, ..., or 10. Use the Gelman–Rubin method to analyze convergence of these sequences. 
+
+**Answer 4: **
+```{r, fig.show='hide', warning=FALSE}
+library(coda)
+
+n<-10
+k<-10
+
+## Run 10 sequences with 10 different starting points and use them in if
+f1 <- mcmc.list()
+for (i in 1:k)
+  { 
+    x <- f.MCMC.MH2(1000, i)
+    f1[[i]]<-as.mcmc(x)
+    
+ }
+print(gelman.diag(f1))
+```
+As we can see from Gelman–Rubin method our result is a value very close to 1 and indicates that chains have converged.
+
+### Question 5
+
+Estimate $\int_{0}^{\infty}xf(x)$ using the samples from Steps 1 and 2
+
+
+**Answer 5: **
+
+The integral $\int_{0}^{\infty}xf(x)$ is known that it's the mean value of f(x). So we can easily find the integral by calculating the mean value of the samples that we get.
+
+```{r, fig.show='hide', echo=FALSE}
+cat("The integral from the first sample is ", mean(f.MCMC.MH(10000, 1, 1)), "\n")
+cat("The integral from the second sample is ", mean(f.MCMC.MH2(2000, 100)))
+```
+
+### Question 6:
+
+The distribution generated is in fact a gamma distribution. Look in the literature and define the actual value of the integral. Compare it with the one you obtained.
+
+**Answer 6: **
+
+From the literature we know that a gamma distribution has the following form $$f(x) = [\frac{1}{\Gamma(\alpha)\beta^{\alpha}}] x^{\alpha - 1}e^{\frac{-x}{\beta}}$$ So, we can easily conclude that $\alpha=6$ and $\beta=1$. 
+
+The mean value from a Gamma distribution is $\alpha\beta$, so in our case is 6*1 = 1. Compared to our answers in 5th question we can observe that with chi-square we were much closer to the real value compared to log-normal. That can be easily explained as chi-square converges and we get a representive sample from the proposal distribution while in log-normal we don't get a representive sample from proposal distribution.
