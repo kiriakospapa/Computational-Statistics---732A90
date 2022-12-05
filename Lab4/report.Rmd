@@ -110,7 +110,6 @@ Generate 10 MCMC sequences using the generator from Step 2 and starting points 1
 ```{r, fig.show='hide', warning=FALSE}
 library(coda)
 
-n<-10
 k<-10
 
 ## Run 10 sequences with 10 different starting points and use them in if
