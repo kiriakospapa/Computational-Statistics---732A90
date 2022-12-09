@@ -1,0 +1,125 @@
+---
+title: "Assignment 2"
+author: "Damian Ke and Kyriakos Papadopoulos"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Assignment 2: Bootstrap, jackknife and confidence intervals
+
+# Question 1
+Plot the histogram of Price. Does it remind any conventional distribution? Compute the
+mean price.
+```{r, echo=FALSE}
+library(ggplot2)
+df = read.csv2("prices1.csv")
+p = ggplot(df, aes(x=Price)) +
+  geom_histogram(binwidth=150)
+p
+mean_price = mean(df$Price)
+```
+
+The mean price is equal to `r mean_price`
+
+**Answer**
+The distribution looks like gamma distribution.
+
+# Question 2
+Estimate the distribution of the mean price of the house using bootstrap. Determine the
+bootstrap bias–correction and the variance of the mean price. Compute a 95% confidence
+interval for the mean price using bootstrap percentile, bootstrap BCa, and first–order
+normal approximation.
+
+```{r, echo=FALSE, warning=FALSE}
+library(boot)
+set.seed(12345)
+stat1 = function(data,vn){
+  mean(data[vn,]$Price)
+}
+res=boot(df,stat1,R=1000)
+B=1000
+t_1 = 2*res$t0-mean(res$t)
+var_t = (1/(B-1))*(sum((res$t-mean(res$t))^2))
+```
+**Clarification** Used formulas are accordingly to the lecture slides.
+
+The mean price from bootstrap is equal to `r res$t0`
+
+95% Confidence interval with bootstrap percentile is equal to: (`r boot.ci(res)$percent[4:5]`)
+
+95% Confidence interval with bootstrap BCa is equal to: (`r boot.ci(res)$bca[4:5]`)
+
+95% Confidence interval with bootstrap  first–order
+normal approximation is equal to: `r boot.ci(res)$normal[1,2:3]`
+
+Bootstrap bias–correction is equal to: `r t_1`
+
+Bootstrap variance is equal to: `r var_t`
+
+# Question 3
+Estimate the variance of the mean price using the jackknife and compare it with the
+bootstrap estimate
+
+```{r, echo=FALSE}
+n = length(df$Price)
+t_j = rep(0,n)
+for (j in 1:n){
+  t_j[j] = n*mean(df$Price)-(n-1)*mean(df$Price[-j])
+}
+j_t = mean(t_j)
+var_t2 = (1/(n*(n-1)))*sum((t_j-j_t)**2)
+```
+
+**Clarification**: n is set equal to the length of the data sample
+as according to the course literature when k = 1. 
+According to the lecture slides B=n. By testing both options, there is a small difference
+between the values.
+
+Jackknife variance is equal to: `r var_t2`
+Bootstrap variance is equal to: `r var_t`
+
+**Answer**
+The variance of the mean of jackknife is larger than the bootstrap variance of the mean.
+The jackknife leaves one of the observations and then calculates the variance
+of the new subset for n amount of iterations. Which compared to bootstrap variance of the mean
+will overestimate the variance.
+
+
+## Question 4
+Compare the confidence intervals obtained with respect to their length and the location of
+the estimated mean in these intervals.
+```{r, echo=FALSE, warning=FALSE}
+interval = boot.ci(res)
+interval_percentile = interval$percent[1,4:5]
+interval_bca = interval$bca[1,4:5]
+interval_normal = interval$normal[1,2:3]
+
+interval_percentile[3] = interval_percentile[2]-interval_percentile[1]
+interval_percentile[4] = (interval_percentile[2]-interval_percentile[1])/2
+interval_bca[3] = interval_bca[2]-interval_bca[1]
+interval_bca[4] = (interval_bca[2]-interval_bca[1])/2
+interval_normal[3] = interval_normal[2]-interval_normal[1]
+interval_normal[4] = (interval_normal[2]-interval_normal[1])/2
+
+df_results = t(data.frame(interval_bca,interval_normal,interval_percentile))
+colnames(df_results) = c("Lower CI", "Upper CI", "Length","Mean")
+rownames(df_results) = c("BCA", "Normal","Percentile")
+
+knitr::kable(df_results)
+```
+
+**Answer**
+As it can be seen in the table, BCa has the largest length difference.
+Thereafter it is Percentile and lastly Normal(first–order normal approximation). 
+The mean for corresponding intervals are in order of BCA as largest then Percentile and 
+lastly Normal (first–order normal approximation)
+
+
+
+
