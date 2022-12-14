@@ -1,0 +1,55 @@
+---
+title: "Assignment2"
+author: "Damian Ke and Kyriakos Papadopoulos"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#2 
+
+
+#Calculations
+Probability density function of exponential distribution is equal to
+$\lambda*e^{-\lambda*x}$
+As our random variables are Y and Z, the random variables lambda is equal to
+For Y_i $\lambda = \frac{X_i}{\lambda}$
+For Z_i $\lambda = \frac{X_i}{2\lambda}$
+Therefore,
+$f(Y_i) = \frac{X_i}{\lambda}*e^{-\frac{X_i*Y_i}{\lambda}}$
+$f(Z_i) = \frac{X_i}{2\lambda}*e^{-\frac{X_i*Z_i}{2\lambda}}$
+
+As we are focusing on $\lambda$ for both random variables the jointly probability distribution
+can be therefore used. It is important to mention that both random variables are not
+dependent on eachother as it can be seen in the formula.
+
+Joint probability distribution: 
+$f(Y_i,Z_i) = \frac{X_i}{2\lambda}*e^{-\frac{X_i*Z_i}{2\lambda}}*\frac{X_i}{\lambda}*e^{-\frac{X_i*Y_i}{\lambda}}$
+= $$\frac{X_{i}^2}{2\lambda^2}*e^{-\frac{X_i*Z_i+X_i*2Y_i}{2\lambda}}$$
+
+Likelihood: $L(f(Y_i,Z_i)) = (\frac{1}{2\lambda^2})^n* \prod_{i = 1}^{n}X_{i}^2*e^{-\frac{\sum_{i = 1}^{n}X_i*Z_i+2X_i*2Y_i}{2\lambda}}$ 
+
+Loglikelihood: $$-nlog(2) - 2nlog(\lambda)+\sum_{i = 1}^{n}log(X_i^2)-\frac{\sum_{i = 1}^{n}X_i*Z_i+2X_i*2Y_i}{2\lambda}$$
+
+#Step E
+To make this easier to work with $-\frac{\sum_{i = 1}^{n}X_i*Z_i+2X_i*2Y_i}{2\lambda}$
+converts to = $-\frac{\sum_{i = 1}^{n}X_i*Z_i}{2\lambda}-\frac{\sum_{i = 1}^{n}X_i*Y_i }{\lambda}$
+Because there are some missing values for $Z_i$
+for part $-\frac{\sum_{i = 1}^{n}X_i*Z_i}{2\lda{a}mbda}$
+will be split up into unobserved and observed observations.
+$-\frac{\sum_{i = r+1}^{n}X_i*Z_i}{2\lambda}$ and $-\frac{\sum_{i = 1}^{r}X_i*Z_i}{2\lambda}$
+The unobserved observations have expected value as the random variable.
+The expected value of exponential distribution is $\frac{1}{\lambda}$
+Therefore, $-\frac{\sum_{i = r+1}^{n}X_i*Z_i}{2\lambda}$ = $-\frac{\sum_{i = r+1}^{n}X_i*\frac{2\lambda_k}{X_i}}{2\lambda}$ = $-\frac{\lambda_k}{\lambda} $ 
+
+The final formula for Step E is:
+$$-nlog(2) - 2nlog(\lambda)+\sum_{i = 1}^{n}log(X_i^2)-\frac{\sum_{i = 1}^{r}X_i*Z_i}{2\lambda}-\frac{\lambda_k}{\lambda}-\frac{\sum_{i = 1}^{n}X_i*Y_i }{\lambda}$$
+
+#M step
+The partial derivative is taken of $\frac{\partial Q(\lambda, \lambda^t)}{\partial \lambda} = 0$
+$$\frac{-2n}{\lambda}+\frac{\sum_{i = 1}^{r}X_i*Z_i}{2\lambda^2}+\frac{\lambda_k}{\lambda^2}+\frac{\sum_{i = 1}^{n}X_i*Y_i }{\lambda^2} = 0$$
+
+$$\lambda = \frac{\sum_{i = 1}^{r}X_i*Z_i+\lambda_k+\sum_{i = 1}^{n}X_i*Y_i}{4n}$$
