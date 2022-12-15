@@ -54,16 +54,16 @@ dependent on each other as it can be seen in the formula.
 
 Joint probability distribution: 
 $f(Y_i,Z_i) = \frac{X_i}{2\lambda}*e^{-\frac{X_i*Z_i}{2\lambda}}*\frac{X_i}{\lambda}*e^{-\frac{X_i*Y_i}{\lambda}}$
-= $$\frac{X_{i}^2}{2\lambda^2}*e^{-\frac{X_i*Z_i+X_i*2Y_i}{2\lambda}}$$
+= $$\frac{X_{i}^2}{2\lambda^2}*e^{-\frac{X_i*Z_i+2X_i*Y_i}{2\lambda}}$$
 
-Likelihood: $$L(f(Y_i,Z_i)) = (\frac{1}{2\lambda^2})^n* \prod_{i = 1}^{n}X_{i}^2*e^{-\frac{\sum_{i = 1}^{n}X_i*Z_i+X_i*2Y_i}{2\lambda}}$$
+Likelihood: $$L(f(Y_i,Z_i)) = (\frac{1}{2\lambda^2})^n* \prod_{i = 1}^{n}X_{i}^2*e^{-\frac{\sum_{i = 1}^{n}X_i*Z_i+2X_i*Y_i}{2\lambda}}$$
 
-Loglikelihood: $$Log (L(f(Y_i,Z_i))) = -nlog(2) - 2nlog(\lambda)+\sum_{i = 1}^{n}log(X_i^2)-\frac{\sum_{i = 1}^{n}X_i*Z_i+X_i*2Y_i}{2\lambda}$$
+Loglikelihood: $$Log (L(f(Y_i,Z_i))) = -nlog(2) - 2nlog(\lambda)+\sum_{i = 1}^{n}log(X_i^2)-\frac{\sum_{i = 1}^{n}X_i*Z_i+2X_i*Y_i}{2\lambda}$$
 
 ## Step E
 To make this easier to work with 
 
-$-\frac{\sum_{i = 1}^{n}X_i*Z_i+X_i*2Y_i}{2\lambda}$
+$-\frac{\sum_{i = 1}^{n}X_i*Z_i+2X_i*Y_i}{2\lambda}$
 is split up into $-\frac{\sum_{i = 1}^{n}X_i*Z_i}{2\lambda}-\frac{\sum_{i = 1}^{n}X_i*Y_i }{\lambda}$
 
 Because there are some missing values for $Z_i$ for part $-\frac{\sum_{i = 1}^{n}X_i*Z_i}{2\lambda}$
@@ -105,10 +105,8 @@ EM<-function(x,y,z, kmax){
   while ((abs(prev_lambda-curr_lambda)>eps) && (k<(kmax+1))){
     prev_lambda<-curr_lambda
     
-    ## E-step ?? Do we even need it?
-    #EY= -n*log(2)-2*n*log(prev_lambda)+sum(log(x**2))-(sum(Xobs*Zobs)/2*prev_lambda)-(curr_lambda/prev_lambda)-(sum(x*y)/prev_lambda)
-    
-    ## M-step
+    # The E-step is not needed for this case
+    # M-step
     curr_lambda = (sum(Xobs*Zobs) + 2*(n-r)*curr_lambda + 2*sum(x*y))/(4*n)
     k<-k+1
   }
