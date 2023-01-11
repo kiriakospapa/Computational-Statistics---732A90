@@ -101,7 +101,12 @@ print(derivative(100000))
 the reasons behind the discovered differences.
 
 **A**: We got $1.110223$ and $0$, the real values should be $1$ as the x
-cancel each other and the $\frac{\epsilon}{\epsilon} = 1$. The issue is because of underflow (in both cases). In the first case, R can not represent all the digits. In the second case, in the nominator $100000 + \epsilon$ gives $100000$ as $\epsilon$ is very small and can't be added correctly to 100000.
+cancel each other and the $\frac{\epsilon}{\epsilon} = 1$. The issue is because 
+of underflow in both cases. In the first case, we have rounding error because R can not represent x + 10^-15 as it returns 1.000000000000001110223.
+In the second case, in the nominator $100000 + \epsilon$ gives $100000$ as $\epsilon$ 
+is very small and can't be added correctly to 100000. In general in both cases we have precision problems as we loose significant digits
+
+
 
 ## Question 3: Variance
 
@@ -153,9 +158,8 @@ p <- ggplot(data, aes(x=i, y=as.numeric(Values))) +
 p
 ```
 
-There is a line along the Error = -1, and most of the numbers have a error
-between 4 to 0 and -2 to -4. We can therefore conclude that our function
-is not accurate.The $\sum_{i = 1}^{n} x^2_i$ is a large value. When we substracting with with $\frac{1}{n}*(\sum_{i = 1}^{n} x_i)^2$ and divide by n we get underflow.
+
+The variance in t is equal to 1 so most of the values in the plot are -1 which means that we get as a result 0 instead of 1. This is can easily explained as we have to add  values of similar magnitude but of opposite sign so it leads to catastrophic cancellation and it gives zero.
 
 **Q4**: How can you better implement a variance estimator? Find and
 implement a formula that will give the same results as var()
@@ -277,10 +281,14 @@ p_6
 Explain why
 
 **A**: The first 2 have the overflow problem because they consist of 2
-prod one in the numerator and one in the denominator.In the first case when k is too big n-k as well, the output will be $\frac{Inf}{Inf}$ as the product of a very big sequence is *Inf* in R. When it happens that in R it returns *NaN* value.
+prod one in the numerator and one in the denominator.In the first case when k is 
+too big n-k as well, the output will be $\frac{Inf}{Inf}$ as the product of a very 
+big sequence is *Inf* in R. When it happens that in R it returns *NaN* value.
 
-In the second case we have *NaN* when only n-k is a very big number because The output will be $\frac{Inf}{Inf}$. As mentioned above R in that case returns *NaN*
+In the second case we have *NaN* when only n-k is a very big number because The 
+output will be $\frac{Inf}{Inf}$. As mentioned above R in that case returns *NaN*
 
 
-So in the 3rd case it will output *Inf* as both numerator and denominator are inside the same product and it will return Inf for very big numbers and never *NaN*
+So in the 3rd case it will output *Inf* as both numerator and denominator are 
+inside the same product and it will return Inf for very big numbers and never *NaN*
 
